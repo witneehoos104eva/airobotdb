@@ -108,6 +108,13 @@ export async function POST(request) {
       return json({ error: 'Invalid JSON request body.' }, 400);
     }
 
+    const requiredPassword = process.env.AI_VERIFY_PASSWORD || 'HotHoney';
+    const providedPassword = typeof payload.aiFeaturePassword === 'string' ? payload.aiFeaturePassword : '';
+    if (providedPassword !== requiredPassword) {
+      return json({ error: 'Incorrect password.' }, 401);
+    }
+    delete payload.aiFeaturePassword;
+
     if (!Array.isArray(payload.compactCategoryList) || payload.compactCategoryList.length === 0) {
       return json({ error: 'Missing workbook category list.' }, 400);
     }
