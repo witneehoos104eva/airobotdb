@@ -3,6 +3,19 @@
   "functions": {
     "api/classify.js": {
       "maxDuration": 30
+    },
+    "api/page.js": {
+      "maxDuration": 10
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/api/page"
+    },
+    {
+      "source": "/index.html",
+      "destination": "/api/page"
+    }
+  ]
 }
