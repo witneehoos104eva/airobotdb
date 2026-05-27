@@ -1,6 +1,33 @@
-const ORIGINAL_SNIPPET = "const result=classify(app.draft); if(!result.top) return;\n      const extra=document.getElementById('aiUserContext')?.value||'';\n      const payload=buildAiPayload(result, extra);\n      aiReview={busy:true,result:null,error:'',payloadKey:payload.signature}; renderAiOutput();\n      try{\n        const resp=await fetch('/api/classify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});\n        let data={}; try{ data=await resp.json(); }catch(e){}\n        if(!resp.ok){ throw new Error(data.error || ('Request failed with HTTP '+resp.status)); }";
+const CLIENT_PATCH = `
+<script>
+(function(){
+  if (window.__aiVerifyPasswordPatch) return;
+  window.__aiVerifyPasswordPatch = true;
 
-const PASSWORD_SNIPPET = "const result=classify(app.draft); if(!result.top) return;\n      const password=window.prompt('This feature requires entering the password');\n      if(password===null) return;\n      const extra=document.getElementById('aiUserContext')?.value||'';\n      const payload=buildAiPayload(result, extra);\n      payload.aiFeaturePassword=password;\n      aiReview={busy:true,result:null,error:'',payloadKey:payload.signature}; renderAiOutput();\n      try{\n        const resp=await fetch('/api/classify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});\n        let data={}; try{ data=await resp.json(); }catch(e){}\n        if(resp.status===401){ throw new Error(data.error || 'Incorrect password.'); }\n        if(!resp.ok){ throw new Error(data.error || ('Request failed with HTTP '+resp.status)); }";
+  const originalFetch = window.fetch.bind(window);
+
+  window.fetch = async function(input, init) {
+    const url = typeof input === 'string' ? input : (input && input.url ? String(input.url) : '');
+    const isClassifyCall = url === '/api/classify' || url.endsWith('/api/classify');
+
+    if (isClassifyCall) {
+      const password = window.prompt('This feature requires entering the password');
+      if (password === null) {
+        throw new Error('AI verification cancelled.');
+      }
+
+      if (!init) init = {};
+      if (typeof init.body === 'string') {
+        const payload = JSON.parse(init.body || '{}');
+        payload.aiFeaturePassword = password;
+        init = Object.assign({}, init, { body: JSON.stringify(payload) });
+      }
+    }
+
+    return originalFetch(input, init);
+  };
+})();
+</script>`;
 
 export async function middleware(request) {
   const url = new URL(request.url);
@@ -14,8 +41,12 @@ export async function middleware(request) {
   const upstream = await fetch(upstreamUrl);
   let html = await upstream.text();
 
-  if (html.includes(ORIGINAL_SNIPPET)) {
-    html = html.replace(ORIGINAL_SNIPPET, PASSWORD_SNIPPET);
+  if (!html.includes('__aiVerifyPasswordPatch')) {
+    if (html.includes('</body>')) {
+      html = html.replace('</body>', CLIENT_PATCH + '\n</body>');
+    } else {
+      html += CLIENT_PATCH;
+    }
   }
 
   const headers = new Headers(upstream.headers);
