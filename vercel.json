@@ -8,14 +8,16 @@
       "maxDuration": 10
     }
   },
-  "rewrites": [
+  "redirects": [
     {
       "source": "/",
-      "destination": "/api/page"
+      "destination": "/api/page",
+      "permanent": false
     },
     {
       "source": "/index.html",
-      "destination": "/api/page"
+      "destination": "/api/page",
+      "permanent": false
     }
   ]
 }
