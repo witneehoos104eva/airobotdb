@@ -3,21 +3,6 @@
   "functions": {
     "api/classify.js": {
       "maxDuration": 30
-    },
-    "api/page.js": {
-      "maxDuration": 10
     }
-  },
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/api/page",
-      "permanent": false
-    },
-    {
-      "source": "/index.html",
-      "destination": "/api/page",
-      "permanent": false
-    }
-  ]
+  }
 }
