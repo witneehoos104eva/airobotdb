@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Loop Architect — Design Self-Verifying Agentic Loops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<script src="jszip.min.js" defer></script>
+</head>
+<body>
+<div id="app">
+
+  <!-- ======================= HEADER ======================= -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M12 3a9 9 0 1 0 9 9" />
+          <path d="M21 3v6h-6" />
+          <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/>
+        </svg>
+      </div>
+      <div>
+        <h1>The Loop Architect</h1>
+        <p class="tagline">From manual prompter to system architect</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button id="btn-api-key" class="btn ghost small" title="Configure Anthropic API key for LLM-assisted scoping">
+        <span id="api-key-status-dot" class="dot dot-off"></span> LLM Scoping
+      </button>
+      <button id="btn-reset" class="btn ghost small">Reset</button>
+    </div>
+  </header>
+
+  <!-- ======================= STEPPER ======================= -->
+  <nav class="stepper" id="stepper">
+    <button class="step" data-step="0"><span class="step-num">1</span><span class="step-label">Objective &amp; Heartbeat</span></button>
+    <button class="step" data-step="1"><span class="step-num">2</span><span class="step-label">Infrastructure &amp; Isolation</span></button>
+    <button class="step" data-step="2"><span class="step-num">3</span><span class="step-label">Knowledge &amp; Skills</span></button>
+    <button class="step" data-step="3"><span class="step-num">4</span><span class="step-label">Maker–Checker Agents</span></button>
+    <button class="step" data-step="4"><span class="step-num">5</span><span class="step-label">Spine &amp; Guardrails</span></button>
+    <button class="step" data-step="5"><span class="step-num">6</span><span class="step-label">Export</span></button>
+  </nav>
+
+  <main class="content">
+
+    <!-- ======================= STEP 1: OBJECTIVE & HEARTBEAT ======================= -->
+    <section class="panel" data-panel="0">
+      <div class="panel-head">
+        <h2>Pillar I — The Objective &amp; "Heartbeat" Engine</h2>
+        <p>The heartbeat transforms a one-off run into a recurring loop. Define your objective, derive verifiable success metrics, and choose the primitive that drives the loop.</p>
+      </div>
+
+      <div class="card">
+        <h3>Objective Ingestion</h3>
+        <label class="field">
+          <span class="field-label">High-level objective</span>
+          <textarea id="objective" rows="3" placeholder='e.g. "Refactor the authentication module" or "Keep CI green on the release branch"'></textarea>
+        </label>
+        <div class="row gap">
+          <label class="field grow">
+            <span class="field-label">Loop name <span class="hint">(kebab-case, used for command &amp; skill names)</span></span>
+            <input id="loop-name" type="text" placeholder="auth-refactor" spellcheck="false" />
+          </label>
+          <label class="field grow">
+            <span class="field-label">Target repository / directory <span class="hint">(optional)</span></span>
+            <input id="repo-path" type="text" placeholder="~/code/my-app" spellcheck="false" />
+          </label>
+        </div>
+        <div class="row gap wrap">
+          <button id="btn-scope" class="btn primary">⚡ Generate Success Metrics</button>
+          <span id="scope-mode-note" class="hint"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Verifiable Success Metrics <span class="hint">(3–5 required — each must be checkable by a command or condition)</span></h3>
+        <div id="metrics-list" class="metrics-list"></div>
+        <button id="btn-add-metric" class="btn ghost small">+ Add metric</button>
+        <div id="metrics-validation" class="validation"></div>
+      </div>
+
+      <div class="card">
+        <h3>Heartbeat Selection Matrix</h3>
+        <p class="card-sub">The system recommends a heartbeat from your objective. You can override it.</p>
+        <div id="heartbeat-recommendation" class="recommendation hidden"></div>
+        <div class="heartbeat-grid" id="heartbeat-grid">
+          <label class="hb-option" data-hb="in-session">
+            <input type="radio" name="heartbeat" value="in-session" />
+            <div class="hb-body">
+              <div class="hb-title">In-Session <code>/loop</code></div>
+              <div class="hb-desc">Active monitoring of long test runs and deploys.</div>
+              <div class="hb-ctx">⚠ Stops when the terminal/session closes.</div>
+            </div>
+          </label>
+          <label class="hb-option" data-hb="run-until-done">
+            <input type="radio" name="heartbeat" value="run-until-done" />
+            <div class="hb-body">
+              <div class="hb-title">Run-Until-Done <code>/goal</code></div>
+              <div class="hb-desc">Complex tasks requiring turns until a condition is met.</div>
+              <div class="hb-ctx">Uses a separate judge model (e.g. Claude Haiku).</div>
+            </div>
+          </label>
+          <label class="hb-option" data-hb="scheduled">
+            <input type="radio" name="heartbeat" value="scheduled" />
+            <div class="hb-body">
+              <div class="hb-title">Scheduled <code>cron / Routines</code></div>
+              <div class="hb-desc">Morning triage, dependency audits, daily briefings.</div>
+              <div class="hb-ctx">Exports local cron syntax and GitHub Action YAML.</div>
+            </div>
+          </label>
+          <label class="hb-option" data-hb="event-driven">
+            <input type="radio" name="heartbeat" value="event-driven" />
+            <div class="hb-body">
+              <div class="hb-title">Event-Driven <code>Channels / Webhooks</code></div>
+              <div class="hb-desc">Reacting to PR opens or GitHub issues.</div>
+              <div class="hb-ctx">Real-time response via MCP connectors.</div>
+            </div>
+          </label>
+        </div>
+
+        <div id="hb-config" class="hb-config"></div>
+        <label class="check unattended">
+          <input type="checkbox" id="unattended" />
+          <span><strong>Unattended operation</strong> — background autonomy (vs. in-session active monitoring). Tightens default guardrails.</span>
+        </label>
+      </div>
+      <div class="panel-nav"><span></span><button class="btn primary" data-nav="next">Next: Infrastructure →</button></div>
+    </section>
+
+    <!-- ======================= STEP 2: INFRASTRUCTURE & ISOLATION ======================= -->
+    <section class="panel hidden" data-panel="1">
+      <div class="panel-head">
+        <h2>Pillar II — Infrastructure &amp; Isolation</h2>
+        <p>Isolation is the prerequisite for parallel agentic work: it prevents file collisions and repository-history corruption.</p>
+      </div>
+
+      <div class="card">
+        <h3>Isolation Configurator — Repository State Detection</h3>
+        <p class="card-sub">Paste the output of <code>git worktree list</code> (and optionally <code>git status -sb</code>) and the configurator will detect your state — or declare it manually.</p>
+        <label class="field">
+          <span class="field-label">Paste <code>git worktree list</code> output <span class="hint">(optional)</span></span>
+          <textarea id="worktree-paste" rows="3" class="mono" placeholder="/home/me/app        a1b2c3d [main]&#10;/home/me/app-agent  d4e5f6a [agent/loop-1]" spellcheck="false"></textarea>
+        </label>
+        <div id="worktree-detect" class="validation"></div>
+        <div class="radio-row">
+          <label class="check"><input type="radio" name="wt-state" value="none" checked /> <span>No worktree isolation yet — generate init commands</span></label>
+          <label class="check"><input type="radio" name="wt-state" value="exists" /> <span>Clean worktree environment already present</span></label>
+          <label class="check"><input type="radio" name="wt-state" value="no-isolation" /> <span>Run in main checkout (no isolation — single loop only)</span></label>
+        </div>
+        <div class="row gap">
+          <label class="field grow"><span class="field-label">Loop branch name</span><input id="wt-branch" type="text" value="" placeholder="agent/loop-name" spellcheck="false" /></label>
+          <label class="field grow"><span class="field-label">Parallel sub-agent threads</span>
+            <select id="parallel-agents"><option value="1">1 (sequential)</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select>
+          </label>
+        </div>
+        <div id="wt-commands" class="codeblock-wrap"></div>
+      </div>
+
+      <div class="card">
+        <h3>Connector (MCP) Integration</h3>
+        <p class="card-sub">Enable autonomous action through Model Context Protocol connectors. Keys are mapped as environment-variable references — <strong>never stored in generated files</strong>.</p>
+        <div class="connector-grid" id="connector-grid">
+          <label class="connector"><input type="checkbox" data-conn="github" checked />
+            <div><div class="conn-title">GitHub</div><div class="conn-desc">PR management, issues, CI status</div><code class="conn-env">GITHUB_TOKEN</code></div>
+          </label>
+          <label class="connector"><input type="checkbox" data-conn="linear" />
+            <div><div class="conn-title">Linear</div><div class="conn-desc">Ticket updates &amp; triage</div><code class="conn-env">LINEAR_API_KEY</code></div>
+          </label>
+          <label class="connector"><input type="checkbox" data-conn="playwright" />
+            <div><div class="conn-title">Playwright</div><div class="conn-desc">Independent UI verification</div><code class="conn-env">—</code></div>
+          </label>
+        </div>
+        <div id="env-mapping" class="env-mapping"></div>
+        <div class="radio-row">
+          <span class="field-label">Write key references into:</span>
+          <label class="check"><input type="radio" name="env-target" value="settings" checked /> <span><code>.claude/settings.json</code> env block</span></label>
+          <label class="check"><input type="radio" name="env-target" value="dotenv" /> <span><code>.env</code> file (+ <code>.env.example</code>)</span></label>
+        </div>
+      </div>
+      <div class="panel-nav"><button class="btn ghost" data-nav="prev">← Back</button><button class="btn primary" data-nav="next">Next: Knowledge →</button></div>
+    </section>
+
+    <!-- ======================= STEP 3: KNOWLEDGE & SKILLS ======================= -->
+    <section class="panel hidden" data-panel="2">
+      <div class="panel-head">
+        <h2>Pillar III — The Knowledge Layer (Skills &amp; Prompt Generation)</h2>
+        <p>Prevent "Goldfish Syndrome" — agents restarting with zero context — by codifying project knowledge into persistent, validated Skills.</p>
+      </div>
+
+      <div class="card">
+        <h3>SKILL.md Generator</h3>
+        <div class="row gap">
+          <label class="field grow"><span class="field-label">Skill name</span><input id="skill-name" type="text" placeholder="defaults to loop name" spellcheck="false" /></label>
+        </div>
+        <label class="field">
+          <span class="field-label">Intent <span class="hint">(required metadata — when should an agent invoke this skill?)</span></span>
+          <textarea id="skill-intent" rows="2" placeholder="Use when working on the authentication module: refactoring, testing, or reviewing auth code."></textarea>
+        </label>
+        <label class="field">
+          <span class="field-label">Tool-use instructions <span class="hint">(required — specific commands the agent must run)</span></span>
+          <textarea id="skill-tools" rows="4" class="mono" placeholder="- Run `npm test -- auth` after every change to auth/&#10;- Use `npx eslint auth/ --max-warnings 0` before committing&#10;- Never edit generated files in auth/dist/"></textarea>
+        </label>
+        <div id="skill-validation" class="validation"></div>
+      </div>
+
+      <div class="card">
+        <h3>Reference Library</h3>
+        <p class="card-sub">Upload proprietary documentation (internal API specs, runbooks). Each document is summarized into the skill's metadata section so the agent starts every run with context.</p>
+        <div class="row gap wrap">
+          <input type="file" id="ref-upload" multiple accept=".md,.txt,.json,.yaml,.yml,.rst,.adoc" hidden />
+          <button class="btn ghost" id="btn-ref-upload">📄 Upload documents</button>
+          <span class="hint">.md, .txt, .json, .yaml — summarized client-side (or via LLM if configured)</span>
+        </div>
+        <div id="ref-list" class="ref-list"></div>
+      </div>
+
+      <div class="card">
+        <h3>Tiny Prompts</h3>
+        <p class="card-sub">To reduce token bloat and maintenance friction, the system generates single-line invocations instead of large instruction blocks.</p>
+        <div id="tiny-prompts" class="codeblock-wrap"></div>
+      </div>
+      <div class="panel-nav"><button class="btn ghost" data-nav="prev">← Back</button><button class="btn primary" data-nav="next">Next: Agents →</button></div>
+    </section>
+
+    <!-- ======================= STEP 4: MAKER-CHECKER ======================= -->
+    <section class="panel hidden" data-panel="3">
+      <div class="panel-head">
+        <h2>Pillar IV — The Maker–Checker &amp; Verification Split</h2>
+        <p>Adversarial Code Review: <strong>the model that writes the code must never be the one that grades it.</strong></p>
+      </div>
+
+      <div class="agents-grid">
+        <div class="card agent-card">
+          <div class="agent-role maker">MAKER — Implementer</div>
+          <label class="field"><span class="field-label">Model</span>
+            <select id="maker-model">
+              <option value="claude-sonnet-5" selected>claude-sonnet-5 (fast, capable)</option>
+              <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 (fastest)</option>
+              <option value="claude-opus-4-8">claude-opus-4-8</option>
+              <option value="claude-fable-5">claude-fable-5 (strongest)</option>
+            </select>
+          </label>
+          <label class="field"><span class="field-label">Reasoning effort</span>
+            <div class="effort-toggle" data-for="maker">
+              <button data-effort="low">low</button><button data-effort="medium" class="active">medium</button><button data-effort="high">high</button><button data-effort="max">max</button>
+            </div>
+          </label>
+          <label class="field"><span class="field-label">Extra instructions <span class="hint">(optional)</span></span>
+            <textarea id="maker-notes" rows="2" placeholder="Follow existing code style; small commits."></textarea>
+          </label>
+        </div>
+
+        <div class="card agent-card">
+          <div class="agent-role checker">CHECKER — Adversarial Reviewer</div>
+          <label class="field"><span class="field-label">Model <span class="hint">(must differ from maker)</span></span>
+            <select id="checker-model">
+              <option value="claude-fable-5">claude-fable-5 (strongest)</option>
+              <option value="claude-opus-4-8" selected>claude-opus-4-8</option>
+              <option value="claude-sonnet-5">claude-sonnet-5</option>
+              <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 (judge only)</option>
+            </select>
+          </label>
+          <label class="field"><span class="field-label">Reasoning effort</span>
+            <div class="effort-toggle" data-for="checker">
+              <button data-effort="low">low</button><button data-effort="medium">medium</button><button data-effort="high" class="active">high</button><button data-effort="max">max</button>
+            </div>
+          </label>
+          <label class="check"><input type="checkbox" id="checker-playwright" /> <span>Reviewer independently runs Playwright UI verification</span></label>
+          <label class="check"><input type="checkbox" id="checker-security" checked /> <span>Include security-review pass (high-effort)</span></label>
+        </div>
+      </div>
+      <div id="agent-validation" class="validation"></div>
+
+      <div class="card">
+        <h3>Decision Justification <span class="hint">(prevention of cognitive surrender)</span></h3>
+        <label class="check"><input type="checkbox" id="decision-justification" checked />
+          <span>Require agents to document <strong>why</strong> each architectural choice was made in the Spine's <code>Decision Log</code>. Keeps the human the engineer.</span></label>
+      </div>
+
+      <div class="card">
+        <h3>Output Format</h3>
+        <div class="radio-row">
+          <label class="check"><input type="radio" name="agent-format" value="claude" checked /> <span>Markdown → <code>.claude/agents/</code> (Claude Code)</span></label>
+          <label class="check"><input type="radio" name="agent-format" value="codex" /> <span>TOML → <code>.codex/agents/</code> (Codex)</span></label>
+          <label class="check"><input type="radio" name="agent-format" value="both" /> <span>Both</span></label>
+        </div>
+      </div>
+      <div class="panel-nav"><button class="btn ghost" data-nav="prev">← Back</button><button class="btn primary" data-nav="next">Next: Guardrails →</button></div>
+    </section>
+
+    <!-- ======================= STEP 5: SPINE & GUARDRAILS ======================= -->
+    <section class="panel hidden" data-panel="4">
+      <div class="panel-head">
+        <h2>Pillar V — The Spine, Reliability &amp; Guardrails</h2>
+        <p>The Spine (<code>progress.md</code>) is the persistent state file that lets the loop survive between runs. Deterministic guardrails prevent Loop Drift.</p>
+      </div>
+
+      <div class="card">
+        <h3>Spine File</h3>
+        <div class="radio-row">
+          <label class="check"><input type="radio" name="spine-file" value="progress.md" checked /> <span><code>progress.md</code></span></label>
+          <label class="check"><input type="radio" name="spine-file" value="AGENTS.md" /> <span><code>AGENTS.md</code></span></label>
+        </div>
+        <p class="card-sub">Schema: status tracking (in-progress / completed / failures flagged), decision log, and the NEEDS-HUMAN escalation flag.</p>
+      </div>
+
+      <div class="card">
+        <h3>Defensive Parameters</h3>
+        <div class="guardrail-grid">
+          <label class="field"><span class="field-label">max_iterations <span class="hint">hard turn limit — prevents infinite cycles</span></span>
+            <input type="number" id="g-max-iterations" value="20" min="1" max="500" /></label>
+          <label class="field"><span class="field-label">max_spend ($) <span class="hint">hard dollar limit — controls financial liability</span></span>
+            <input type="number" id="g-max-spend" value="25" min="0" step="0.5" /></label>
+          <label class="field"><span class="field-label">similarity_threshold <span class="hint">Jaccard similarity vs prior 3 turns — detects repetition</span></span>
+            <input type="number" id="g-similarity" value="0.92" min="0.5" max="1" step="0.01" /></label>
+          <label class="field"><span class="field-label">max_minutes <span class="hint">temporal cap on background execution</span></span>
+            <input type="number" id="g-max-minutes" value="90" min="1" max="1440" /></label>
+        </div>
+        <div id="guardrail-validation" class="validation"></div>
+      </div>
+
+      <div class="card">
+        <h3>Escalation &amp; Termination Logic</h3>
+        <div class="logic-box mono" id="escalation-preview"></div>
+        <label class="field" style="max-width:340px">
+          <span class="field-label">Verification-failure repeats before NEEDS-HUMAN</span>
+          <input type="number" id="g-fail-repeats" value="3" min="1" max="10" />
+        </label>
+      </div>
+
+      <div class="card">
+        <h3>Context Maintenance Routine</h3>
+        <label class="check"><input type="checkbox" id="context-maintenance" checked />
+          <span>Append a Context Maintenance Routine to <code>CLAUDE.md</code> — guides the agent to use <code>/compact</code> or <code>/clear</code> to manage token bloat while relying on the Spine for long-term memory.</span></label>
+      </div>
+      <div class="panel-nav"><button class="btn ghost" data-nav="prev">← Back</button><button class="btn primary" data-nav="next">Review &amp; Export →</button></div>
+    </section>
+
+    <!-- ======================= STEP 6: EXPORT ======================= -->
+    <section class="panel hidden" data-panel="5">
+      <div class="panel-head">
+        <h2>Structured Output &amp; Implementation Guide</h2>
+        <p>The deployable file structure is the primary deliverable. Review every file, then export.</p>
+      </div>
+
+      <div id="export-validation" class="validation big"></div>
+
+      <div class="export-layout">
+        <div class="card file-tree-card">
+          <h3>Export Manifest</h3>
+          <div id="file-tree" class="file-tree mono"></div>
+          <div class="export-actions">
+            <button id="btn-download-zip" class="btn primary">⬇ Download ZIP</button>
+            <button id="btn-copy-file" class="btn ghost">Copy current file</button>
+            <button id="btn-download-file" class="btn ghost">Download current file</button>
+          </div>
+        </div>
+        <div class="card file-preview-card">
+          <div class="file-preview-head"><code id="preview-path">—</code></div>
+          <pre id="file-preview" class="file-preview mono"></pre>
+        </div>
+      </div>
+
+      <div class="card checklist-card">
+        <h3>Human-in-the-Loop Checklist <span class="hint">(mandatory audit — you remain accountable for the output)</span></h3>
+        <label class="check big"><input type="checkbox" class="hitl" /> <span><strong>1. Review the Diffs</strong> — manually audit code changes before merging. The loop proposes; you decide.</span></label>
+        <label class="check big"><input type="checkbox" class="hitl" /> <span><strong>2. Verify "NEEDS-HUMAN" Notes</strong> — resolve blockers the loop could not handle before restarting it.</span></label>
+        <label class="check big"><input type="checkbox" class="hitl" /> <span><strong>3. Usage Auditing</strong> — run <code>/usage</code> or <code>/cost</code> to monitor for Shadow Costs incurred by sub-agents.</span></label>
+        <div id="hitl-note" class="validation"></div>
+      </div>
+      <div class="panel-nav"><button class="btn ghost" data-nav="prev">← Back</button><span></span></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>"Designing the loop is the cure when you do it with judgment — and the accelerant when you do it to avoid thinking."</p>
+  </footer>
+</div>
+
+<!-- API key modal -->
+<dialog id="api-modal">
+  <h3>LLM-Assisted Scoping</h3>
+  <p class="card-sub">Optionally provide an Anthropic API key to generate success metrics and document summaries with Claude. Without a key, a built-in heuristic engine is used. The key is stored only in this browser's localStorage and sent only to <code>api.anthropic.com</code>.</p>
+  <label class="field"><span class="field-label">Anthropic API key</span>
+    <input type="password" id="api-key-input" placeholder="sk-ant-..." spellcheck="false" /></label>
+  <div class="row gap" style="justify-content:flex-end">
+    <button class="btn ghost" id="api-clear">Clear key</button>
+    <button class="btn ghost" id="api-cancel">Cancel</button>
+    <button class="btn primary" id="api-save">Save</button>
+  </div>
+</dialog>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
